@@ -49,14 +49,14 @@ proof -
     using JesteHipEkvDef
     by simp
   then show "sorted (HipSort l)"
-    sorry (*izbaci teo1*)
+    sorry (*izbaci teo_sort*)
 
 next
   have "mset (ubaciSve l 0) = mset l"
     using ubaciSve_korektnost_mset
     by simp
   then show "mset (HipSort l) = mset l"
-    sorry (*izbaci teo2*)
+    sorry (*izbaci teo_mset*)
 
 qed
 

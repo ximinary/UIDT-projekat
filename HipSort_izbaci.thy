@@ -8,7 +8,6 @@ function izbaci :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> i
          else izbaci (swap l i najveci) najveci m))"
   by pat_completeness auto
 termination
-  using swap_len
   by (relation "measure (\<lambda>(l, i, m). (m - i))") (auto simp add: if_split)
 
 
@@ -21,9 +20,11 @@ fun JesteHip2 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 "JesteHip2 l m = (\<forall>i \<in> {0..<m}. i = najveci3 l i m)"
 
 fun SkoroHip2 :: "int list \<Rightarrow> nat  \<Rightarrow> nat \<Rightarrow> bool" where
-"SkoroHip2 l m q = (\<forall>i \<in> {0..<m} - {q}. i = najveci3 l i m)"
+"SkoroHip2 l m q = ((\<forall>i \<in> {0..<m} - {q}. i = najveci3 l i m) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
+                                                                     (*PODRZAVAJUCI USLOV*)
 
-lemma VezaSkoroJeste2: "2*q + 1 > m \<and> SkoroHip2 l m q \<longrightarrow> JesteHip2 l m"
+
+lemma VezaSkoroJeste2: "2*q + 1 > m \<and> SkoroHip2 l m q \<longrightarrow> JesteHip2 l m" (*da li treba ?*)
 proof
   assume *: "m < 2 * q + 1 \<and> SkoroHip2 l m q"
   from * have "\<forall>i \<in> {0..<m} - {q}. i = najveci3 l i m"

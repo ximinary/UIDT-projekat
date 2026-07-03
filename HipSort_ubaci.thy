@@ -22,27 +22,6 @@ termination
   by (relation "measure (\<lambda>(l, i). (length l - i))") auto
 
 
-fun najveci3roditelj :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
-"najveci3roditelj l i m = 
-   (if desno i < m then
-       (if l!roditelj i \<ge> l!levo i \<and> l!roditelj i \<ge> l!desno i then 
-            roditelj i
-        else if l!levo i \<ge> l!desno i then
-            levo i
-        else 
-            desno i
-       )
-    else if levo i < m then 
-        (if (l!roditelj i) \<ge> (l!levo i) then
-            roditelj i
-         else 
-            levo i
-        ) 
-    else 
-         roditelj i
-    )"
-
-
 
 fun JesteHip1 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 "JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"
@@ -53,7 +32,6 @@ fun SkoroHip1 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> boo
 
 lemma VezaSkoroJeste1: "SkoroHip1 l m 0 \<longleftrightarrow> JesteHip1 l m"
   by auto
-
 
 
 lemma ubaci_SkoroHip1:
