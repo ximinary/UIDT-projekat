@@ -173,19 +173,9 @@ proof (induct l i tr mx rule: NajveciZbirSegmenta'.induct)
     by auto
 qed
 
-theorem NajveciZbirSegmenta'_korektnost:
-  shows "NajveciZbirSegmenta' l 0 0 0 = NajveciZbirSegmentaGS l"
-proof - 
-  have "invarianta l 0 0 0"
-    by auto
-  then show ?thesis
-    using NajveciZbirSegmenta'_korak[of l 0 0 0]
-    by auto
-qed
-
 theorem NajveciZbirSegmenta_korektnost:
   shows "NajveciZbirSegmenta l = NajveciZbirSegmentaGS l"
-  using NajveciZbirSegmenta'_korektnost[of l]
+  using NajveciZbirSegmenta'_korak[of l 0 0 0]
   by auto
 
 end

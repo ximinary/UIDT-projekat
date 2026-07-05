@@ -18,10 +18,6 @@ fun desno :: "nat \<Rightarrow> nat" where
 fun dubina :: "nat \<Rightarrow> nat" where
   "dubina i = floor_log (i+1)"
 *)
-lemma rod_levo_rod  : shows "roditelj (levo  (roditelj q)) = roditelj q"
-  by simp
-lemma rod_desno_rod : shows "roditelj (desno (roditelj q)) = roditelj q"
-  by simp
 lemma rod_levo      : shows "roditelj (levo  q) = q"
   by simp
 lemma rod_desno     : shows "roditelj (desno q) = q"
@@ -36,7 +32,12 @@ lemma desno_rod_even: assumes "q \<noteq> 0" and "2 dvd q" shows "desno (roditel
   using assms by auto
 
 
-lemma mset_swap[simp]: 
+lemma swap_len[simp]:
+  shows "length (swap l i j) = length l"
+  unfolding swap_def
+  by (metis length_list_update)
+
+lemma swap_mset: 
 assumes "i < length l"
 and "j < length l"
 shows "mset (swap l i j) = mset l"
@@ -44,12 +45,21 @@ shows "mset (swap l i j) = mset l"
   unfolding swap_def
   by (metis assms(2) assms(1) mset_swap)
 
-lemma swap_len[simp]:
-shows "length (swap l i j) = length l"
-  unfolding swap_def
-  by (metis length_list_update)
-
 (*
+lemma swap_eqsw:
+  assumes "i < length l"
+      and "j < length l" 
+      and "nl = swap l i j"
+    shows "l!i = nl!j"
+  using assms unfolding swap_def by simp
+
+lemma swap_eqnsw:
+  assumes "i < length l"
+      and "j < length l" 
+      and "nl = swap l i j"
+    shows "\<forall>x. x \<noteq> i \<and> x \<noteq> j \<longrightarrow> nl!x = l!x"
+  using assms unfolding swap_def by simp
+
 lemma swap_lemma1:
   assumes "i < length l"
   and "j < length l"
@@ -109,8 +119,24 @@ fun najveci3roditelj :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarr
          roditelj i
     )"
 
+lemma najveci3_simp:
+  assumes "i < m"
+  and  "najveci3 l i m = i"
+  shows "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
+  using assms
+  by (smt (verit, del_insts) One_nat_def add_Suc_right desno.elims lessI levo.elims linorder_less_linear
+      najveci3.simps nat_arith.rule0 one_add_one)
 
+lemma najveci3roditelj_simp:
+  assumes "0 < i" 
+  and "i < m"
+  and  "najveci3roditelj l i m = i"
+  shows "(desno i < m \<and> l!roditelj i \<ge> l!levo i \<and> l!roditelj i \<ge> l!desno i) \<or> (desno i = m \<and> l!roditelj i \<ge> l!levo i) \<or> (desno i > m)"
+  using assms
+  by (smt (verit, best) desno_rod_even levo_rod_odd linorder_less_linear najveci3roditelj.elims nat_less_le 
+      rod_desno rod_levo)
 
+(*
 lemma l2to1:
   assumes "0 < i"
   and "i < m"
@@ -149,15 +175,6 @@ next
     by (smt (verit, ccfv_SIG) assms najveci3.simps)
 qed
 
-lemma l2to1slucajevi:
-  assumes "0 < i"
-  and "i < m"
-  and  "najveci3 l i m = i"
-  shows "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
-  using assms
-  by (smt (verit, del_insts) One_nat_def add_Suc_right desno.elims lessI levo.elims linorder_less_linear najveci3.simps
-      nat_arith.rule0 one_add_one)
-
 lemma slucajevi:
   shows "desno i < m \<or> desno i = m \<or> desno i > m"
   by auto
@@ -185,5 +202,6 @@ lemma l1to2:
   shows "najveci3 l i m = i"
   using assms
   by auto
+*)
 
 end
