@@ -4,10 +4,8 @@ begin
 
 fun ubaci :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
 "ubaci l i = 
-   (if i = 0 \<or> l ! (roditelj i) \<ge> l ! i then 
-        l 
-    else
-       ubaci (swap l i (roditelj i)) (roditelj i))"
+   (if i = 0 \<or> l ! (roditelj i) \<ge> l ! i then l 
+    else ubaci (swap l i (roditelj i)) (roditelj i))"
 
 lemma ubaci_len:
   assumes "i < length l"
@@ -15,7 +13,8 @@ lemma ubaci_len:
   by (induction l i rule: ubaci.induct) auto
 
 function ubaciSve :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
-"ubaciSve l i = (if i \<ge> length l then l else ubaciSve (ubaci l i) (i+1))"
+"ubaciSve l i = (if i \<ge> length l then l 
+                 else ubaciSve (ubaci l i) (i+1))"
   by pat_completeness auto
 termination
   using ubaci_len
@@ -30,8 +29,6 @@ fun SkoroHip1 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> boo
 "SkoroHip1 l m q = ((\<forall>i \<in> {1..<m} - {q}. l!roditelj i \<ge> l!i) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
                                                                          (*PODRZAVAJUCI USLOV*)
 
-lemma VezaSkoroJeste1: "SkoroHip1 l m 0 \<longleftrightarrow> JesteHip1 l m"
-  by auto
 
 lemma swap_lemma_ubaci:
   assumes "q \<noteq> 0"
@@ -99,8 +96,7 @@ proof -
       "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> roditelj q \<longrightarrow> nl!x = l!x"
       "\<forall>x. x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q
                              \<longrightarrow> nl!roditelj x = l!roditelj x"
-    by (metis assms(2,3,5,6) swap_lemma_ubaci(1), metis assms(2,3,5,6) swap_lemma_ubaci(2), 
-        metis assms(2,3,5,6) swap_lemma_ubaci(3), metis assms(2,3,5,6) swap_lemma_ubaci(4))    
+    by (metis swap_lemma_ubaci(1), metis swap_lemma_ubaci(2), metis swap_lemma_ubaci(3), metis swap_lemma_ubaci(4))    
 
   from assms(1) have tv1: "\<forall>i \<in> {1..<m} - {q}. l!roditelj i \<ge> l!i"
     by auto
@@ -411,7 +407,7 @@ theorem ubaciSve_korektnost_hip:
 
 lemma ubaci_korak_mset:
   assumes "i < length l"
-  shows "mset (ubaci l i) = mset l"
+    shows "mset (ubaci l i) = mset l"
   using assms
   by (induction l i rule: ubaci.induct) (auto simp add: swap_mset)
   
@@ -424,6 +420,11 @@ lemma ubaciSve_korak_mset:
 theorem ubaciSve_korektnost_mset:
   shows "mset (ubaciSve l 0) = mset l"
   using ubaciSve_korak_mset
-  by  auto
+  by auto
+
+lemma ubaciSve_len:
+  shows "length (ubaciSve l i) = length l"
+  using ubaci_len
+  by (induction l i rule: ubaciSve.induct) auto
 
 end

@@ -18,17 +18,35 @@ fun desno :: "nat \<Rightarrow> nat" where
 fun dubina :: "nat \<Rightarrow> nat" where
   "dubina i = floor_log (i+1)"
 *)
-lemma rod_levo      : shows "roditelj (levo  q) = q"
+
+lemma rod_levo:
+  shows "roditelj (levo  q) = q"
   by simp
-lemma rod_desno     : shows "roditelj (desno q) = q"
+
+lemma rod_desno:
+  shows "roditelj (desno q) = q"
   by simp
-lemma levo_rod_odd  : assumes "\<not> (2 dvd q)" shows "levo (roditelj q) = q"      
+
+lemma levo_rod_odd:
+  assumes "\<not> (2 dvd q)" 
+    shows "levo (roditelj q) = q"      
   using assms by simp
-lemma levo_rod_even : assumes "q \<noteq> 0" and "2 dvd q" shows "levo (roditelj q) = q - 1" 
-  using assms by auto 
-lemma desno_rod_odd : assumes "\<not> (2 dvd q)" shows "desno (roditelj q) = q + 1"
+
+lemma levo_rod_even:
+  assumes "q \<noteq> 0"
+      and "2 dvd q"
+    shows "levo (roditelj q) = q - 1" 
+  using assms by auto
+
+lemma desno_rod_odd:
+  assumes "\<not> (2 dvd q)"
+    shows "desno (roditelj q) = q + 1"
   using assms by simp
-lemma desno_rod_even: assumes "q \<noteq> 0" and "2 dvd q" shows "desno (roditelj q) = q"
+
+lemma desno_rod_even:
+  assumes "q \<noteq> 0"
+      and "2 dvd q"
+    shows "desno (roditelj q) = q"
   using assms by auto
 
 
@@ -38,9 +56,9 @@ lemma swap_len[simp]:
   by (metis length_list_update)
 
 lemma swap_mset: 
-assumes "i < length l"
-and "j < length l"
-shows "mset (swap l i j) = mset l"
+  assumes "i < length l"
+      and "j < length l"
+    shows "mset (swap l i j) = mset l"
   using assms
   unfolding swap_def
   by (metis assms(2) assms(1) mset_swap)
@@ -121,60 +139,30 @@ fun najveci3roditelj :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarr
 
 lemma najveci3_simp:
   assumes "i < m"
-  and  "najveci3 l i m = i"
-  shows "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
+      and  "najveci3 l i m = i"
+    shows "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
   using assms
-  by (smt (verit, del_insts) One_nat_def add_Suc_right desno.elims lessI levo.elims linorder_less_linear
-      najveci3.simps nat_arith.rule0 one_add_one)
+  by (smt (verit, best) One_nat_def add_less_cancel_left desno.simps lessI levo.simps linorder_less_linear
+      najveci3.simps numeral_2_eq_2)
 
 lemma najveci3roditelj_simp:
   assumes "0 < i" 
-  and "i < m"
-  and  "najveci3roditelj l i m = i"
-  shows "(desno i < m \<and> l!roditelj i \<ge> l!levo i \<and> l!roditelj i \<ge> l!desno i) \<or> (desno i = m \<and> l!roditelj i \<ge> l!levo i) \<or> (desno i > m)"
-  using assms
-  by (smt (verit, best) desno_rod_even levo_rod_odd linorder_less_linear najveci3roditelj.elims nat_less_le 
-      rod_desno rod_levo)
+      and "i < m"
+      and  "najveci3roditelj l i m = i"
+    shows "(desno i < m \<and> l!roditelj i \<ge> l!levo i \<and> l!roditelj i \<ge> l!desno i) \<or> (desno i = m \<and> l!roditelj i \<ge> l!levo i) \<or> (desno i > m)"
+  using assms desno_rod_even levo_rod_odd rod_desno rod_levo
+  by (smt (verit, best) linorder_less_linear najveci3roditelj.elims nat_less_le)
+
+
+lemma roditelj_je_najveci3:
+  assumes "0 < i"
+      and "i < m"
+      and "najveci3 l (roditelj i) m = roditelj i"
+    shows "l ! roditelj i \<ge> l ! i"
+  using assms desno_rod_even levo_rod_odd
+  by (smt (verit, best) najveci3.simps nat_less_le)
 
 (*
-lemma l2to1:
-  assumes "0 < i"
-  and "i < m"
-  and "najveci3 l (roditelj i) m = roditelj i"
-  shows " l ! roditelj i \<ge> l ! i"
-proof (cases "2 dvd i")
-  case True
-  have "roditelj i < m"
-      using assms
-      by (metis One_nat_def Suc_leI True add_Suc_right diff_le_self div_less_dividend lessI nat_arith.rule0
-          nat_dvd_not_less nat_less_le one_add_one order_less_le_trans roditelj.simps zero_less_diff)
-    then have "roditelj i = najveci3 l (roditelj i) m"
-      using assms
-      by auto
-    moreover
-    have "i = desno (roditelj i)"
-      using assms True
-      by (metis One_nat_def Suc_pred add.commute add_gr_0 desno.elims div2_Suc_Suc dvdE even_Suc_div_two lessI
-          mult_Suc_right nat_less_le nonzero_mult_div_cancel_left one_add_one roditelj.simps)
-    ultimately show ?thesis
-      by (smt (verit, ccfv_SIG) assms najveci3.simps)
-next
-  case False
-  have "roditelj i < m"
-    using assms
-    by (metis (no_types, lifting) One_nat_def Suc_le_eq Suc_pred add_Suc_right div_less div_less_dividend
-        linorder_not_less nat_arith.rule0 nat_less_le one_add_one order_less_le_trans roditelj.simps)
-  then have "roditelj i = najveci3 l (roditelj i) m"
-    using assms
-    by metis
-  moreover
-  have "i = levo (roditelj i)"
-    using assms False
-    by auto
-  ultimately show ?thesis
-    by (smt (verit, ccfv_SIG) assms najveci3.simps)
-qed
-
 lemma slucajevi:
   shows "desno i < m \<or> desno i = m \<or> desno i > m"
   by auto
