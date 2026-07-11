@@ -34,14 +34,43 @@ fun invarijanta :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 lemma izbaci_len:
   assumes "i \<le> length l"
     shows "length (izbaci l i m) = length l"
-  by (induction l i m rule: izbaci.induct) auto
+  by (induction l i m rule: izbaci.induct) (auto simp add: swap_len)
 
 lemma izbaci'_len:
   assumes "i \<le> length l"
       and "i > 1"
     shows "length (izbaci' l i) = length l"
-  using izbaci_len assms
-  by force
+  using izbaci_len swap_len assms
+  by (metis izbaci'.simps zero_le)
+
+lemma izbaci_desno:
+  assumes "i \<le> length l"
+    shows "\<forall>x\<ge>m. izbaci l i m ! x = l!x"
+proof (induction l i m rule: izbaci.induct)
+  case (1 l i m)
+  show ?case 
+  proof (cases "i = najveci3 l i m")
+    case True
+    then show ?thesis 
+      by auto
+  next
+    case False
+    with 1 have "\<forall>x\<ge>m. izbaci l i m ! x = swap l i (najveci3 l i m) ! x"
+      by auto
+    moreover
+    from assms have swap_props:
+      "\<forall>x\<ge>m. swap l i (najveci3 l i m) ! x = l!x"
+      unfolding swap_def
+      by auto
+    ultimately show ?thesis 
+      by auto
+  qed
+qed
+
+lemma sortiran_jedinicni:
+  shows "JesteSortiran l (length l - 1)"
+  by auto
+
 
 lemma najveci3_deca:
   assumes "najveci3 l q m \<noteq> q"
@@ -60,27 +89,6 @@ lemma deca_razl:
     shows "levo q \<noteq> q"
       and "desno q \<noteq> q"
   by auto
-
-lemma swap_lemma_izbaci:
-  assumes "p < m"
-      and "q < p"
-      and "m \<le> length l"
-    shows "l!p = (swap l q p)!q"
-      and "(swap l q p)!p = l!q"
-      and "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> p \<longrightarrow> (swap l q p)!x = l!x"
-proof -
-  from assms show "l!p = (swap l q p)!q"
-    unfolding swap_def
-    by auto
-next
-  from assms show "(swap l q p)!p = l!q"
-    unfolding swap_def
-    by auto
-next
-  from assms show "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> p \<longrightarrow> (swap l q p)!x = l!x"
-    unfolding swap_def
-    by auto
-qed
 
 lemma izbaci_SkoroHip2:
   assumes "SkoroHip2 l m q"
@@ -293,58 +301,121 @@ lemma izbaci'_invarijanta:
     assumes "invarijanta l q"         (* JesteHip2 l q \<and> JesteSortiran l q \<and> l ! 0 \<le> l ! q *)
         and "q > 1"
         and "q \<le> length l"
-      shows "invarijanta (izbaci' l q) (q-1)"   
-                                     (* JesteHip2 nl (q-1) \<and> JesteSortiran nl (q-1) \<and> l ! 0 \<le> l ! (q-1) *)
+      shows "invarijanta (izbaci' l q) (q-1)"   (*izbaci' l q = izbaci (swap l 0 (q-1)) 0 (q-1)*)
 proof -
-  show ?thesis
-    sorry
-
-
-
-(*
-  from assms(1) have tv1: "\<forall>i \<in> {0..<q}. najveci3 l i q = i"
-    by auto
-  with assms(2) have tv1': "najveci3 l (roditelj (q-1)) q = roditelj (q-1)"
-    by auto
-  have tv1'': "\<forall>i \<in> {0..<q-1}. najveci3 l i (q-1) = i"
-  proof -
-    from assms(2) have assms2': "q \<noteq> 0"
-      by auto
-    with tv1' have "najveci3 l (roditelj (q-1)) (q-1) = roditelj (q-1)"
-      by (smt (verit, best) add_diff_inverse_nat less_Suc_eq less_one najveci3.simps plus_1_eq_Suc)
-
-    from assms2' tv1 have "\<forall>i \<in> {0..<q} - {roditelj (q-1)}. najveci3 l i (q-1) = i"
-      by (smt (verit) Diff_iff add_diff_inverse_nat less_Suc_eq less_one najveci3.simps plus_1_eq_Suc)
-
-    with tv1 tv1' assms2' have "\<forall>i \<in> {0..<q}. najveci3 l i (q-1) = i"
-      by (smt (verit, best) add_diff_inverse_nat less_Suc_eq less_one najveci3.simps plus_1_eq_Suc)
-    then show ?thesis
-      by simp
-  qed
-  have "\<forall>x \<in> {1..<q-1}. swap l 0 (q - 1) ! x = l ! x"
-    using swap_lemma_izbaci(3)[of "q-1" q "0" l] assms(3)
-    by auto
-  with tv1'' have "\<forall>i \<in> {1..<q-1}. najveci3 (swap l 0 (q-1)) i (q-1) = i"
-    sorry
-  then have "SkoroHip2 (swap l 0 (q-1)) (q-1) 0"
-    by auto
-  with assms(3) have thesis1: "JesteHip2 (izbaci (swap l 0 (q-1)) 0 (q-1)) (q-1)"
-    using izbaci_korak_hip[of "swap l 0 (q-1)" "q-1" 0]
+  from assms(2-3) have swap_props:
+      "swap l 0 (q-1)!(q-1) = l!0"
+      "swap l 0 (q-1)!0     = l!(q-1)"
+      "\<forall>x. x < length l \<and> x \<noteq> 0 \<and> x \<noteq> (q-1) \<longrightarrow> swap l 0 (q-1)!x = l!x"
     unfolding swap_def
+    by (simp, metis diff_is_0_eq diff_zero linorder_not_less not_less_iff_gr_or_eq
+        nth_list_update_eq nth_list_update_neq, simp)
+
+  from assms(1) have hip: "JesteHip2 l q"
     by auto
 
-  from assms(1) have "JesteSortiran l q"
-    by auto
-  with assms(2,3) have tv2: "JesteSortiran (swap l 0 (q-1)) q"
-    sorry
-  from assms(1) have "l ! 0 \<le> l ! q"
-    by auto
-  with assms(2,3) have tv3: "(swap l 0 (q-1)) ! (q-1) \<le> (swap l 0 (q-1)) ! q"
-    unfolding swap_def
+  from assms(2,3) have len: "length l > 1"
     by simp
-  with tv2 have "JesteSortiran (swap l 0 (q-1)) (q-1)"
-    sorry
-*)
+
+  let ?izb_sw_l = "izbaci (swap l 0 (q - 1)) 0 (q-1)"
+  from assms(2,3) have izb': "?izb_sw_l = izbaci' l q"
+    by simp
+
+  have "JesteHip2 (izbaci' l q) (q-1)"
+  proof -
+    (* ... *)
+
+    show ?thesis
+      sorry
+  qed
+
+  moreover
+  have "JesteSortiran (izbaci' l q) (q-1)"
+  proof -
+    from assms(1) have tvs1: "\<forall>x \<in> {q..<length l - 1}. l!x \<le> l!(x+1)"
+      by auto
+
+    from izbaci'_len[of q l] izb' assms(2,3) have len_izb_sw_l: "length ?izb_sw_l = length l"
+      by simp
+
+    from swap_props(3) assms(2) have swap3': "\<forall>x. q \<le> x \<and> x < length l \<longrightarrow> swap l 0 (q-1)!x = l!x"
+      by auto
+    then have tvs2: "\<forall>x. q \<le> x \<and> x < length l \<longrightarrow> ?izb_sw_l ! x = l!x"
+      using swap_len izbaci_desno
+      by (metis diff_le_self le_trans less_Suc_eq_0_disj less_imp_Suc_add nat_less_le)
+    with tvs1 have tvs3: "\<forall>x \<in> {q..<length ?izb_sw_l - 1}. ?izb_sw_l!x \<le> ?izb_sw_l!(x+1)"
+      using len_izb_sw_l 
+      by (metis (full_types) add.commute atLeastLessThan_iff less_diff_conv not_less_iff_gr_or_eq trans_le_add2
+          trans_less_add2)
+
+    show ?thesis
+    proof (cases "q \<ge> length l")
+      case True
+      with assms(3) have "q = length l"
+        by simp
+      with assms(2) show ?thesis
+        using izbaci'_len sortiran_jedinicni
+        by (metis le_refl)
+    next
+      case False      
+      have "\<forall>x \<in> {q-1..<length ?izb_sw_l - 1}. ?izb_sw_l!x \<le> ?izb_sw_l!(x+1)"
+      proof 
+        fix x
+        assume a: "x \<in> {q - 1..<length (izbaci (swap l 0 (q - 1)) 0 (q - 1)) - 1}"
+        show "?izb_sw_l ! x \<le> ?izb_sw_l ! (x + 1)"
+        proof (cases "x \<le> q - 1")
+          case True
+          with a have "x = q - 1"
+            by (meson atLeastLessThan_iff nle_le)
+          with assms(1,2) tvs2 False show "?izb_sw_l!x \<le> ?izb_sw_l!(x+1)"
+            using swap_props(1) izbaci_desno
+            by (metis invarijanta.simps le_add_diff_inverse2 le_zero_eq linorder_not_less nle_le)
+        next
+          case False
+          with a have "x\<in>{q..<length (izbaci (swap l 0 (q - 1)) 0 (q - 1)) - 1}"
+            by (meson atLeastLessThan_iff dec_less_imp_less_eq linorder_not_less)
+          with tvs3 show ?thesis 
+            by metis
+        qed
+      qed
+      with tvs3 izb' show ?thesis
+        by (metis JesteSortiran.simps)
+    qed
+  qed
+
+  moreover
+  have "q - 1 < length (izbaci' l q) \<longrightarrow> (izbaci' l q) ! 0 \<le> (izbaci' l q) ! (q-1)"
+  proof
+    assume a: "q - 1 < length (izbaci' l q)"
+    have "izbaci' l q ! (q - 1) = l ! 0"
+      by (metis bot_nat_0.extremum izb' izbaci_desno le_refl swap_props(1))
+    
+    from hip have "\<forall>i. i < q \<longrightarrow> najveci3 l i q = i"
+      by auto
+    with assms(2) have "najveci3 l 0 q = 0"
+      by blast
+    with assms(2) have "l ! 0 \<ge> l ! 1 \<and> (q = 2 \<or> l ! 0 \<ge> l ! 2)"
+      by (metis One_nat_def Suc_eq_plus1 add_2_eq_Suc' desno.simps le_eq_less_or_eq less_eq_Suc_le levo.simps mult_zero_right
+          one_add_one rod_desno rod_levo roditelj_je_najveci3)
+
+    show "izbaci' l q ! 0 \<le> izbaci' l q ! (q - 1)"
+    proof (cases "q \<le> 2")
+      case True
+      with assms(2) have "q = 2"
+        by auto
+      then show ?thesis
+        sorry
+    next
+      case False
+      then show ?thesis
+        sorry
+    qed
+  qed
+  then have "q - 1 \<ge> length (izbaci' l q) \<or> (izbaci' l q) ! 0 \<le> (izbaci' l q) ! (q-1)" 
+    by presburger
+
+  ultimately show ?thesis
+    using invarijanta.simps by blast
 qed
 
 
@@ -381,7 +452,7 @@ proof (induction l q  rule: izbaciSve.induct)
         next
           case False
           with tv have "(izbaciSve (izbaci' l 2) 1) ! 0 \<le> (izbaciSve (izbaci' l 2) 1) ! 1"
-            by auto
+            by (metis "1.prems"(1,3) \<open>q = 2\<close> dual_order.refl invarijanta.elims(2) izbaci'_len izbaciSve.simps)
           with True show ?thesis 
             by simp
         qed
@@ -416,7 +487,7 @@ proof (induction l q  rule: izbaciSve.induct)
   qed
 qed
 
-
+(* TEOREMA KOJU TREBA ISKORISTITI NA KRAJU *)
 theorem izbaciSve_korektnost_hip:
   assumes "JesteHip2 l (length l)"
   shows "JesteSortiran (izbaciSve l (length l)) 0"
@@ -439,7 +510,7 @@ lemma izbaci_korak_mset:
       and "m \<le> length l"
     shows "mset (izbaci l i m) = mset l"
   using assms
-  by (induction l i m rule: izbaci.induct, auto simp add: swap_mset)
+  by (induction l i m rule: izbaci.induct) (auto simp add: swap_mset swap_len)
 
 lemma izbaci'_mset:
   assumes "i \<le> length l"

@@ -10,7 +10,7 @@ fun ubaci :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
 lemma ubaci_len:
   assumes "i < length l"
     shows "length (ubaci l i) = length l"
-  by (induction l i rule: ubaci.induct) auto
+  by (induction l i rule: ubaci.induct) (auto simp add: swap_len)
 
 function ubaciSve :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
 "ubaciSve l i = (if i \<ge> length l then l 
@@ -30,57 +30,6 @@ fun SkoroHip1 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> boo
                                                                          (*PODRZAVAJUCI USLOV*)
 
 
-lemma swap_lemma_ubaci:
-  assumes "q \<noteq> 0"
-      and "q < m"
-      and "nl = swap l q (roditelj q)"
-      and "m \<le> length l"
-    shows "l!roditelj q = nl!q"
-      and "nl!roditelj q = l!q"
-      and "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> roditelj q \<longrightarrow> nl!x = l!x"
-      and "\<forall>x. x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q
-                             \<longrightarrow> nl!roditelj x = l!roditelj x"
-proof -
-  from assms show  "l!roditelj q = nl!q"
-    unfolding swap_def
-    by auto
-next
-  from assms show "nl!roditelj q = l!q" 
-    unfolding swap_def
-    by auto
-next
-  from assms show "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> roditelj q \<longrightarrow> nl!x = l!x" 
-    unfolding swap_def
-    by auto
-next
-  show "\<forall>x. x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q
-                             \<longrightarrow> nl!roditelj x = l!roditelj x" 
-  proof 
-    fix x
-    show "x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q \<longrightarrow> nl ! roditelj x = l ! roditelj x"
-    proof 
-      assume a: "x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q"
-
-      from a have a1: "x < m" by auto
-      from a have a2: "x \<noteq> 0" by auto
-      from a have a3: "x \<noteq> levo (roditelj q)" by auto
-      from a have a4: "x \<noteq> desno (roditelj q)" by auto
-      from a have a5: "x \<noteq> levo q" by auto
-      from a have a6: "x \<noteq> desno q" by auto
-
-      from assms(2) a2 a3 a4 have a34: "roditelj x \<noteq> roditelj q"
-        by simp
-
-      from assms(2) a2 a5 a6 have a56: "roditelj x \<noteq> q"
-        by simp
-
-      from a1 a2 a34 a56 assms show "nl ! roditelj x = l ! roditelj x"
-        unfolding swap_def
-        by auto
-    qed
-  qed
-qed
-
 lemma ubaci_SkoroHip1:
   assumes "SkoroHip1 l m q"
       and "q \<noteq> 0"
@@ -90,19 +39,20 @@ lemma ubaci_SkoroHip1:
       and "m \<le> length l"
     shows "SkoroHip1 nl m (roditelj q)"
 proof -
-  from assms(2, 3, 5, 6) have swap_props: 
+  from assms(2,3,5,6) have swap_props: 
       "l!roditelj q = nl!q"
       "nl!roditelj q = l!q"
       "\<forall>x. x < m \<and> x \<noteq> q \<and> x \<noteq> roditelj q \<longrightarrow> nl!x = l!x"
       "\<forall>x. x < m \<and> x \<noteq> 0 \<and> x \<noteq> levo (roditelj q) \<and> x \<noteq> desno (roditelj q) \<and> x \<noteq> levo q \<and> x \<noteq> desno q
                              \<longrightarrow> nl!roditelj x = l!roditelj x"
-    by (metis swap_lemma_ubaci(1), metis swap_lemma_ubaci(2), metis swap_lemma_ubaci(3), metis swap_lemma_ubaci(4))    
+    unfolding swap_def
+    by auto
 
   from assms(1) have tv1: "\<forall>i \<in> {1..<m} - {q}. l!roditelj i \<ge> l!i"
     by auto
 
   (* iz podrzavajuceg uslova dobijamo da je deca u q \<le> od q -- zute grane*)
-  from assms(1, 2) have tv2: "najveci3roditelj l q m = roditelj q"
+  from assms(1,2) have tv2: "najveci3roditelj l q m = roditelj q"
     by auto
   have tv2': "najveci3 nl q m = q"
   proof (cases "desno q < m")
@@ -130,7 +80,7 @@ proof -
         by auto
     qed
   qed
-  from assms(2, 3) tv2' have tv2'': "(desno q < m \<and> nl!q \<ge> nl!levo q \<and> nl!q \<ge> nl!desno q) \<or> (desno q = m \<and> nl!q \<ge> nl!levo q) \<or> (desno q > m)"
+  from assms(2,3) tv2' have tv2'': "(desno q < m \<and> nl!q \<ge> nl!levo q \<and> nl!q \<ge> nl!desno q) \<or> (desno q = m \<and> nl!q \<ge> nl!levo q) \<or> (desno q > m)"
     using najveci3_simp[of q m nl]
     by simp
 
@@ -409,7 +359,7 @@ lemma ubaci_korak_mset:
   assumes "i < length l"
     shows "mset (ubaci l i) = mset l"
   using assms
-  by (induction l i rule: ubaci.induct) (auto simp add: swap_mset)
+  by (induction l i rule: ubaci.induct) (auto simp add: swap_mset swap_len)
   
 lemma ubaciSve_korak_mset:
   shows "mset (ubaciSve l i) = mset l"

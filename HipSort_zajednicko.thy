@@ -50,7 +50,7 @@ lemma desno_rod_even:
   using assms by auto
 
 
-lemma swap_len[simp]:
+lemma swap_len:
   shows "length (swap l i j) = length l"
   unfolding swap_def
   by (metis length_list_update)
@@ -62,39 +62,6 @@ lemma swap_mset:
   using assms
   unfolding swap_def
   by (metis assms(2) assms(1) mset_swap)
-
-(*
-lemma swap_eqsw:
-  assumes "i < length l"
-      and "j < length l" 
-      and "nl = swap l i j"
-    shows "l!i = nl!j"
-  using assms unfolding swap_def by simp
-
-lemma swap_eqnsw:
-  assumes "i < length l"
-      and "j < length l" 
-      and "nl = swap l i j"
-    shows "\<forall>x. x \<noteq> i \<and> x \<noteq> j \<longrightarrow> nl!x = l!x"
-  using assms unfolding swap_def by simp
-
-lemma swap_lemma1:
-  assumes "i < length l"
-  and "j < length l"
-  shows "\<forall>k \<in> {0..<length l} - {i, j}. l!k = (swap l i j)!k"
-  unfolding swap_def
-  by auto
-
-lemma swap_lemma2:
-  assumes "i < length l"
-  and "j < length l"
-  shows "(swap l i j)!i = l!j"
-  and "(swap l i j)!j = l!i" 
-  unfolding swap_def
-  using assms
-  sledgehammer
-  by (metis list_update_id nth_list_update_eq nth_list_update_neq, simp)
-*)
 
 
 fun najveci3 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat" where
@@ -161,35 +128,5 @@ lemma roditelj_je_najveci3:
     shows "l ! roditelj i \<ge> l ! i"
   using assms desno_rod_even levo_rod_odd
   by (smt (verit, best) najveci3.simps nat_less_le)
-
-(*
-lemma slucajevi:
-  shows "desno i < m \<or> desno i = m \<or> desno i > m"
-  by auto
-
-lemma najveci3slucaj1:
-  assumes "desno i < m"
-  shows "(najveci3 l i m = i) \<longleftrightarrow> (l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i)"
-  using assms
-  by auto
-
-lemma najveci3slucaj2:
-  assumes "desno i = m"
-  shows "(najveci3 l i m = i) \<longleftrightarrow> (l!i \<ge> l!levo i)"
-  using assms
-  by auto
-
-lemma najveci3slucaj3:
-  assumes "desno i > m"
-  shows "najveci3 l i m = i"
-  using assms
-  by auto
-
-lemma l1to2:
-  assumes "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
-  shows "najveci3 l i m = i"
-  using assms
-  by auto
-*)
 
 end
