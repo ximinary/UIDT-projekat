@@ -16,11 +16,9 @@ fun izbaciSve :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
 "izbaciSve l i = (if i \<le> 1 then l
                   else izbaciSve (izbaci' l i) (i-1))"
 
-
 (*
 fun JesteHip2 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
-"JesteHip2 l m = (\<forall>i \<in> {0..<m}. najveci3 l i m = i)"
-*)
+"JesteHip2 l m = (\<forall>i \<in> {0..<m}. najveci3 l i m = i)"     *)
 
 fun SkoroHip2 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bool" where
 "SkoroHip2 l m q = ((\<forall>i \<in> {0..<m} - {q}. najveci3 l i m = i) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
@@ -87,12 +85,6 @@ lemma najveci3_dalje:
   using assms najveci3_deca
   by fastforce
 
-lemma deca_razl:
-  assumes "q \<noteq> 0"
-    shows "levo q \<noteq> q"
-      and "desno q \<noteq> q"
-  by auto
-
 
 lemma SkoroHip2_0_swap1:
   assumes "SkoroHip2 l m 0"
@@ -158,7 +150,7 @@ qed
 lemma roditelj_induct [case_names 0 rec]:
   fixes P :: "nat \<Rightarrow> bool"
   assumes base: "P 0"
-  assumes step: "\<And>x. \<lbrakk>x > 0; P (roditelj x) \<rbrakk> \<Longrightarrow> P x"
+  assumes step: "\<And>x. \<lbrakk> x > 0; P (roditelj x) \<rbrakk> \<Longrightarrow> P x"
   shows "P x"
 proof (induction x rule: less_induct)
   case (less x)

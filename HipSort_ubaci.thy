@@ -20,11 +20,9 @@ termination
   using ubaci_len
   by (relation "measure (\<lambda>(l, i). (length l - i))") auto
 
-
 (*
 fun JesteHip1 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
-"JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"
-*)
+"JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"    *)
 
 fun SkoroHip1 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bool" where
 "SkoroHip1 l m q = ((\<forall>i \<in> {1..<m} - {q}. l!roditelj i \<ge> l!i) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
@@ -110,8 +108,8 @@ proof -
     qed
   qed
   from assms(2,3) tv2' have tv2'': "(desno q < m \<and> nl!q \<ge> nl!levo q \<and> nl!q \<ge> nl!desno q) \<or> (desno q = m \<and> nl!q \<ge> nl!levo q) \<or> (desno q > m)"
-    using najveci3_simp[of q m nl]
-    by simp
+    by (smt (verit, best) One_nat_def add_less_cancel_left desno.simps lessI levo.simps linorder_less_linear
+      najveci3.simps numeral_2_eq_2)
 
   (* ako nije vazilo za tu jedinu granu, vazi posle swap -- siva grana *)
   from assms(4) swap_props(1,2) have tv3: "nl!roditelj q \<ge> nl!q"

@@ -1,5 +1,5 @@
 theory HipSort_zajednicko
-  imports Main (*"HOL-Library.Discrete_Functions"*) "HOL-Library.Multiset"
+  imports Main "HOL-Library.Multiset"
 begin
 
 definition swap :: "'a list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> 'a list" where
@@ -14,11 +14,6 @@ fun levo :: "nat \<Rightarrow> nat" where
 fun desno :: "nat \<Rightarrow> nat" where
 "desno i = 2*i + 2"
 
-(*
-fun dubina :: "nat \<Rightarrow> nat" where
-  "dubina i = floor_log (i+1)"
-*)
-
 lemma rod_levo:
   shows "roditelj (levo  q) = q"
   by simp
@@ -30,17 +25,6 @@ lemma rod_desno:
 lemma levo_rod_odd:
   assumes "\<not> (2 dvd q)" 
     shows "levo (roditelj q) = q"      
-  using assms by simp
-
-lemma levo_rod_even:
-  assumes "q \<noteq> 0"
-      and "2 dvd q"
-    shows "levo (roditelj q) = q - 1" 
-  using assms by auto
-
-lemma desno_rod_odd:
-  assumes "\<not> (2 dvd q)"
-    shows "desno (roditelj q) = q + 1"
   using assms by simp
 
 lemma desno_rod_even:
@@ -109,21 +93,11 @@ fun najveci3roditelj :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarr
          roditelj i
     )"
 
-lemma najveci3_simp:
-  assumes "i < m"
-      and  "najveci3 l i m = i"
-    shows "(desno i < m \<and> l!i \<ge> l!levo i \<and> l!i \<ge> l!desno i) \<or> (desno i = m \<and> l!i \<ge> l!levo i) \<or> (desno i > m)"
-  using assms
-  by (smt (verit, best) One_nat_def add_less_cancel_left desno.simps lessI levo.simps linorder_less_linear
-      najveci3.simps numeral_2_eq_2)
+fun JesteHip1 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
+"JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"
 
-lemma najveci3roditelj_simp:
-  assumes "0 < i" 
-      and "i < m"
-      and  "najveci3roditelj l i m = i"
-    shows "(desno i < m \<and> l!roditelj i \<ge> l!levo i \<and> l!roditelj i \<ge> l!desno i) \<or> (desno i = m \<and> l!roditelj i \<ge> l!levo i) \<or> (desno i > m)"
-  using assms desno_rod_even levo_rod_odd rod_desno rod_levo
-  by (smt (verit, best) linorder_less_linear najveci3roditelj.elims nat_less_le)
+fun JesteHip2 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
+"JesteHip2 l m = (\<forall>i \<in> {0..<m}. najveci3 l i m = i)"
 
 
 lemma roditelj_je_najveci3:
@@ -133,13 +107,6 @@ lemma roditelj_je_najveci3:
     shows "l ! roditelj i \<ge> l ! i"
   using assms desno_rod_even levo_rod_odd
   by (smt (verit, best) najveci3.simps nat_less_le)
-
-
-fun JesteHip1 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
-"JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"
-
-fun JesteHip2 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
-"JesteHip2 l m = (\<forall>i \<in> {0..<m}. najveci3 l i m = i)"
 
 lemma JesteHipEkvDef: "JesteHip1 l m = JesteHip2 l m"
 proof
