@@ -21,14 +21,43 @@ termination
   by (relation "measure (\<lambda>(l, i). (length l - i))") auto
 
 
-
+(*
 fun JesteHip1 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 "JesteHip1 l m = (\<forall>i \<in> {1..<m}. l ! roditelj i \<ge> l ! i)"
+*)
 
 fun SkoroHip1 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bool" where
 "SkoroHip1 l m q = ((\<forall>i \<in> {1..<m} - {q}. l!roditelj i \<ge> l!i) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
-                                                                         (*PODRZAVAJUCI USLOV*)
+                                                                        (*PODRZAVAJUCI USLOV*)
 
+(* BLOK POMOCNIH LEMA *)
+
+lemma ubaciSve_len:
+  shows "length (ubaciSve l i) = length l"
+  using ubaci_len
+  by (induction l i rule: ubaciSve.induct) auto
+
+
+(* BLOK MSET LEMA *)
+
+lemma ubaci_korak_mset:
+  assumes "i < length l"
+    shows "mset (ubaci l i) = mset l"
+  using assms
+  by (induction l i rule: ubaci.induct) (auto simp add: swap_mset swap_len)
+  
+lemma ubaciSve_korak_mset:
+  shows "mset (ubaciSve l i) = mset l"
+  using ubaci_korak_mset
+  by (induction l i rule: ubaciSve.induct) auto
+
+theorem ubaciSve_korektnost_mset:
+  shows "mset (ubaciSve l 0) = mset l"
+  using ubaciSve_korak_mset
+  by auto
+
+
+(* BLOK HIP LEMA *)
 
 lemma ubaci_SkoroHip1:
   assumes "SkoroHip1 l m q"
@@ -349,32 +378,9 @@ proof (induction l q rule: ubaciSve.induct)
   qed
 qed
 
-(* TEOREMA KOJU TREBA ISKORISTITI NA KRAJU *)
 theorem ubaciSve_korektnost_hip:
   shows "JesteHip1 (ubaciSve l 0) (length l)"
   using ubaciSve_korak_hip[of 0 l]
   by auto
-
-lemma ubaci_korak_mset:
-  assumes "i < length l"
-    shows "mset (ubaci l i) = mset l"
-  using assms
-  by (induction l i rule: ubaci.induct) (auto simp add: swap_mset swap_len)
-  
-lemma ubaciSve_korak_mset:
-  shows "mset (ubaciSve l i) = mset l"
-  using ubaci_korak_mset
-  by (induction l i rule: ubaciSve.induct) auto
-
-(* TEOREMA KOJU TREBA ISKORISTITI NA KRAJU *)
-theorem ubaciSve_korektnost_mset:
-  shows "mset (ubaciSve l 0) = mset l"
-  using ubaciSve_korak_mset
-  by auto
-
-lemma ubaciSve_len:
-  shows "length (ubaciSve l i) = length l"
-  using ubaci_len
-  by (induction l i rule: ubaciSve.induct) auto
 
 end

@@ -17,9 +17,10 @@ fun izbaciSve :: "int list \<Rightarrow> nat \<Rightarrow> int list" where
                   else izbaciSve (izbaci' l i) (i-1))"
 
 
-
+(*
 fun JesteHip2 :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 "JesteHip2 l m = (\<forall>i \<in> {0..<m}. najveci3 l i m = i)"
+*)
 
 fun SkoroHip2 :: "int list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> bool" where
 "SkoroHip2 l m q = ((\<forall>i \<in> {0..<m} - {q}. najveci3 l i m = i) \<and> (q = 0 \<or> najveci3roditelj l q m = roditelj q))"
@@ -30,6 +31,9 @@ fun JesteSortiran :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 
 fun invarijanta :: "int list \<Rightarrow> nat \<Rightarrow> bool" where
 "invarijanta l m = (JesteHip2 l m \<and> JesteSortiran l m \<and> (m \<ge> length l \<or> l ! 0 \<le> l ! m))"
+
+
+(* BLOK POMOCNIH LEMA *)
 
 lemma izbaci_len:
   assumes "i \<le> length l"
@@ -71,7 +75,6 @@ lemma sortiran_jedinicni:
   shows "JesteSortiran l (length l - 1)"
   by auto
 
-
 lemma najveci3_deca:
   assumes "najveci3 l q m \<noteq> q"
   shows "najveci3 l q m = levo q \<or> najveci3 l q m = desno q"
@@ -89,6 +92,238 @@ lemma deca_razl:
     shows "levo q \<noteq> q"
       and "desno q \<noteq> q"
   by auto
+
+
+lemma SkoroHip2_0_swap1:
+  assumes "SkoroHip2 l m 0"
+    shows "SkoroHip2 (l[0 := x]) m 0"
+proof -
+  from assms have *: "\<forall>i \<in> {1..<m}. najveci3 l i m = i"
+    by auto
+  have "\<forall>i \<in> {1..<m}. najveci3 (l[0 := x]) i m = i"
+  proof
+    fix i
+    assume a: "i \<in> {1..<m}"
+    
+    from a have "l!i = (l[0 := x])!i"
+      by auto
+    moreover
+    from a have "levo i \<ge> m \<or> l!levo i = (l[0 := x])!levo i"
+      by auto
+    moreover
+    from a have "desno i \<ge> m \<or> l!desno i = (l[0 := x])!desno i"
+      by auto
+    ultimately show "najveci3 (l[0 := x]) i m = i"
+      using * a
+      by (smt (verit, del_insts) Suc_eq_plus1 add_2_eq_Suc' desno.simps less_eq_Suc_le
+          levo.simps linorder_not_less najveci3.elims nle_le rod_levo)
+  qed
+  then show ?thesis
+    by auto
+qed
+
+lemma SkoroHip2_0_swap2:
+  assumes "SkoroHip2 l m 0"
+      and "q \<ge> m"
+      and "q < length l"
+    shows "SkoroHip2 (l[q := x]) m 0"
+proof -
+  have *: "\<forall>i. i < length l \<and> i \<noteq> q \<longrightarrow> l!i = (l[q := x])!i"
+    by simp
+  from assms(1) have **: "\<forall>i \<in> {1..<m}. najveci3 l i m = i"
+    by auto
+  have "\<forall>i \<in> {1..<m}. najveci3 (l[q := x]) i m = i"
+  proof
+    fix i
+    assume a: "i \<in> {1..<m}"
+
+    from a * assms(2) have "l!i = (l[q := x])!i"
+      by auto
+    moreover
+    from a * assms(2) have "levo i \<ge> m \<or> l!levo i = (l[q := x])!levo i"
+      by fastforce
+    moreover
+    from a * assms(2) have "desno i \<ge> m \<or> l!desno i = (l[q := x])!desno i"
+      by fastforce
+    ultimately show "najveci3 (l[q := x]) i m = i"
+      using ** a
+      by (smt (verit, best) Suc_eq_plus1 add_2_eq_Suc' desno.simps less_eq_Suc_le levo.simps linorder_not_less najveci3.elims
+          nle_le)
+  qed
+  then show ?thesis
+    by simp
+qed
+
+(* sledeca lema je dobijena pomocu Gemini *)
+lemma roditelj_induct [case_names 0 rec]:
+  fixes P :: "nat \<Rightarrow> bool"
+  assumes base: "P 0"
+  assumes step: "\<And>x. \<lbrakk>x > 0; P (roditelj x) \<rbrakk> \<Longrightarrow> P x"
+  shows "P x"
+proof (induction x rule: less_induct)
+  case (less x)
+  show "P x"
+  proof (cases "x = 0")
+    case True
+    thus "P x" using base by simp
+  next
+    case False
+    hence "x > 0" by simp
+    hence "(roditelj x) < x" by simp
+    hence "P (roditelj x)" by (rule less.IH)
+    thus "P x" using step \<open>x > 0\<close> by simp
+  qed
+qed
+
+lemma hip_koren_najveci_pomocna:
+  assumes "q > 0"
+      and "q < m"
+      and "m \<le> length l"
+    shows "l ! 0 = izbaci l q m ! 0"
+  using assms
+proof (induction l q m rule: izbaci.induct)
+  case (1 l i m)
+  then show ?case
+  proof(cases "i = najveci3 l i m")
+    case True
+    then show ?thesis
+      by auto
+  next
+    case False
+    with 1 have "swap l i (najveci3 l i m) ! 0 = izbaci (swap l i (najveci3 l i m)) (najveci3 l i m) m ! 0"
+      using swap_len[of l i "najveci3 l i m"]
+      by simp
+    moreover
+    from False have "izbaci (swap l i (najveci3 l i m)) (najveci3 l i m) m ! 0 = izbaci l i m ! 0"
+      by simp
+    moreover
+    have "swap l i (najveci3 l i m) ! 0 = l ! 0"
+      unfolding swap_def
+      by (metis "1.prems"(1) less_or_eq_imp_le linorder_not_less najveci3_dalje nth_list_update_neq)
+    ultimately show ?thesis
+      by auto
+  qed
+qed
+
+lemma hip_koren_najveci:
+  assumes "JesteHip1 l m"
+      and "q < m"
+      and "m \<le> length l"
+    shows "l ! 0 \<ge> l ! q"
+  using assms
+proof (induction q rule: roditelj_induct)
+  case 0
+  then show ?case
+    by auto
+next
+  case (rec x)
+  from rec(2-4) have "l ! 0 \<ge> l ! roditelj x"
+    by (smt (verit, ccfv_threshold) Nat.lessE diff_Suc_1 diff_is_0_eq div_less div_less_dividend le_eq_less_or_eq
+        less_eq_Suc_le numeral_2_eq_2 order_less_trans rec.prems(3) roditelj.simps zero_less_Suc)
+  moreover
+  from rec(1,3,4) have "l ! roditelj x \<ge> l ! x"
+      by simp
+  ultimately show ?case
+    by simp
+qed
+
+lemma koren_posle_izbaci:
+  assumes "q < length l"
+      and "q > 0"
+    shows "izbaci l 0 q ! 0 = l ! 0 \<or> (q > 1 \<and> izbaci l 0 q ! 0 = l ! 1) \<or> (q > 2 \<and> izbaci l 0 q ! 0 = l ! 2)"
+proof -
+  from assms(1) have swap_props:
+      "\<forall>x y. x < q \<and> y < q \<longrightarrow> swap l x y!x = l!y"
+      "\<forall>x y. x < q \<and> y < q \<longrightarrow> swap l x y!y = l!x"
+      "\<forall>x y. x < q \<and> y < q \<longrightarrow> (\<forall>z. z < length l \<and> z \<noteq> x \<and> z \<noteq> y \<longrightarrow> swap l x y!z = l!z)"
+    unfolding swap_def
+    by (metis le_trans linorder_not_less list_update_id nat_less_le nth_list_update_eq nth_list_update_neq,
+        metis nat_less_le length_list_update nth_list_update linorder_not_less le_trans, simp)
+
+  from assms(2) have "(q = 1 \<or> q = 2) \<or> q > 2"
+    by auto
+  then show ?thesis
+  proof
+    assume "q = 1 \<or> q = 2"
+    then show ?thesis
+    proof
+      assume "q = 1"
+      then show ?thesis
+        by auto
+    next
+      assume a: "q = 2"
+      show ?thesis
+      proof (cases "najveci3 l 0 q = 0")
+        case True
+        then show ?thesis
+          by auto
+      next
+        case False
+        with a have "najveci3 l 0 q = 1"
+          by auto
+        then have tv1: "swap l 0 1 ! 0 = l ! 1"
+          unfolding swap_def
+          by (metis False assms(1,2) nth_list_update_eq nth_list_update_neq order_less_trans)
+        with a False have "izbaci l 0 q = swap l 0 1"
+          by auto
+        with tv1 show ?thesis
+          by auto
+      qed
+    qed
+  next
+    assume a: "q > 2"
+    show ?thesis
+    proof (cases "najveci3 l 0 q = 0")
+        case True
+        then show ?thesis
+          by auto
+      next
+        case False
+        with assms(1,2) have tv1: "swap l 0 (najveci3 l 0 q) ! 0 = l ! 1 \<or> swap l 0 (najveci3 l 0 q) ! 0 = l ! 2"
+          unfolding swap_def False assms(1,2)
+          by (smt (verit, ccfv_SIG) One_nat_def Suc_eq_plus1 add_2_eq_Suc' desno.simps diff_is_0_eq
+              le_add_diff_inverse2 le_numeral_extra(3) levo.simps mult_2 najveci3.elims nth_list_update_eq 
+              nth_list_update_neq numeral_2_eq_2 order_less_trans)
+        with False a assms(1) show ?thesis
+          using hip_koren_najveci_pomocna[of "najveci3 l 0 q" q "swap l 0 (najveci3 l 0 q)"]
+          using swap_len[of l 0 "najveci3 l 0 q"]
+          by simp
+      qed
+  qed
+qed
+
+
+(* BLOK MSET LEMA *)
+
+lemma izbaci_korak_mset:
+  assumes "i < m"
+      and "m \<le> length l"
+    shows "mset (izbaci l i m) = mset l"
+  using assms
+  by (induction l i m rule: izbaci.induct) (auto simp add: swap_mset swap_len)
+
+lemma izbaci'_mset:
+  assumes "i \<le> length l"
+      and "i > 1"
+    shows "mset (izbaci' l i) = mset l"
+  using assms swap_mset izbaci_korak_mset[of 0 "i-1" "(swap l 0 (i-1))"] swap_len[of l 0 "i-1"]
+  by (metis (mono_tags, lifting) diff_less izbaci'.simps le_eq_less_or_eq order_le_less_trans zero_less_diff
+      zero_less_one)
+
+lemma izbaciSve_korak_mset:
+  assumes "i \<le> length l"
+    shows "mset (izbaciSve l i) = mset l"
+  using assms
+  by (induction l i rule: izbaciSve.induct, metis izbaci_len izbaci'_mset izbaciSve.elims swap_len 
+      less_imp_diff_less linorder_not_less izbaci'.simps diff_is_0_eq nat_less_le)
+
+theorem izbaciSve_korektnost_mset:
+  shows "mset (izbaciSve l (length l)) = mset l"
+  using izbaciSve_korak_mset
+  by (metis nat_less_le linorder_not_less)
+
+
+(* BLOK HIP & SORT LEMA *)
 
 lemma izbaci_SkoroHip2:
   assumes "SkoroHip2 l m q"
@@ -274,6 +509,7 @@ proof -
     by auto
 qed
 
+
 lemma izbaci_korak_hip:
   assumes "SkoroHip2 l m q"
       and "q < m"
@@ -298,10 +534,10 @@ proof (induction l q m rule: izbaci.induct)
 qed
 
 lemma izbaci'_invarijanta:
-    assumes "invarijanta l q"         (* JesteHip2 l q \<and> JesteSortiran l q \<and> l ! 0 \<le> l ! q *)
+    assumes "invarijanta l q"
         and "q > 1"
         and "q \<le> length l"
-      shows "invarijanta (izbaci' l q) (q-1)"   (*izbaci' l q = izbaci (swap l 0 (q-1)) 0 (q-1)*)
+      shows "invarijanta (izbaci' l q) (q-1)"
 proof -
   from assms(2-3) have swap_props:
       "swap l 0 (q-1)!(q-1) = l!0"
@@ -311,7 +547,9 @@ proof -
     by (simp, metis diff_is_0_eq diff_zero linorder_not_less not_less_iff_gr_or_eq
         nth_list_update_eq nth_list_update_neq, simp)
 
-  from assms(1) have hip: "JesteHip2 l q"
+  from assms(1) have hip2: "JesteHip2 l q"
+    by auto
+  with JesteHipEkvDef have hip1: "JesteHip1 l q"
     by auto
 
   from assms(2,3) have len: "length l > 1"
@@ -323,10 +561,20 @@ proof -
 
   have "JesteHip2 (izbaci' l q) (q-1)"
   proof -
-    (* ... *)
-
-    show ?thesis
-      sorry
+    from assms(2) hip1 have "JesteHip1 l (q-1)"
+      by auto
+    with JesteHipEkvDef have "JesteHip2 l (q-1)"
+      by auto
+    then have "SkoroHip2 l (q-1) 0"
+      by auto
+    with assms(2,3) have "SkoroHip2 (swap l 0 (q - 1)) (q-1) 0"
+      using SkoroHip2_0_swap1 SkoroHip2_0_swap2 swap_step_by_step
+      by (metis (no_types, lifting) linorder_not_less list_update_beyond nle_le)
+    with assms(2,3) have "JesteHip2 ?izb_sw_l (q-1)"
+      using izbaci_korak_hip[of "swap l 0 (q - 1)" "q-1" 0]
+      by (metis diff_le_self less_imp_diff_less nat_less_le swap_len zero_less_diff)
+    with izb' show ?thesis
+      by auto
   qed
 
   moreover
@@ -387,29 +635,38 @@ proof -
   have "q - 1 < length (izbaci' l q) \<longrightarrow> (izbaci' l q) ! 0 \<le> (izbaci' l q) ! (q-1)"
   proof
     assume a: "q - 1 < length (izbaci' l q)"
-    have "izbaci' l q ! (q - 1) = l ! 0"
-      by (metis bot_nat_0.extremum izb' izbaci_desno le_refl swap_props(1))
+    have izbacen: "?izb_sw_l ! (q - 1) = l ! 0"
+      by (metis bot_nat_0.extremum izbaci_desno le_refl swap_props(1))
     
-    from hip have "\<forall>i. i < q \<longrightarrow> najveci3 l i q = i"
-      by auto
+    from hip2 have "\<forall>i. i < q \<longrightarrow> najveci3 l i q = i"
+      by auto    
     with assms(2) have "najveci3 l 0 q = 0"
       by blast
-    with assms(2) have "l ! 0 \<ge> l ! 1 \<and> (q = 2 \<or> l ! 0 \<ge> l ! 2)"
+    with assms(2) have levo_desno: "l ! 0 \<ge> l ! 1 \<and> (q = 2 \<or> l ! 0 \<ge> l ! 2)"
       by (metis One_nat_def Suc_eq_plus1 add_2_eq_Suc' desno.simps le_eq_less_or_eq less_eq_Suc_le levo.simps mult_zero_right
           one_add_one rod_desno rod_levo roditelj_je_najveci3)
+    from hip1 assms(2,3) have koren: "l ! 0 \<ge> l ! (q-1)"
+      using hip_koren_najveci
+      by auto
 
-    show "izbaci' l q ! 0 \<le> izbaci' l q ! (q - 1)"
-    proof (cases "q \<le> 2")
-      case True
-      with assms(2) have "q = 2"
+    have izb'_0: "(q > 2 \<and> ?izb_sw_l!0 = l!1) \<or> (q > 3 \<and> ?izb_sw_l!0 = l!2) \<or> ?izb_sw_l!0 = l!(q-1)"
+    proof -
+      have s1: "q \<le> 2 \<or> (swap l 0 (q - 1))!1 = l!1"
+        using swap_props(3) assms(2) len
         by auto
-      then show ?thesis
-        sorry
-    next
-      case False
-      then show ?thesis
-        sorry
+      have s2: "q \<le> 3 \<or> (swap l 0 (q - 1))!2 = l!2"
+        using swap_props(3) assms(2,3) len
+        by (metis (no_types, lifting) One_nat_def Suc_pred less_Suc_eq_le nat_less_le nle_le numeral_2_eq_2 numeral_3_eq_3)
+
+      from a assms(2,3) swap_props(2) s1 s2 show ?thesis
+        using koren_posle_izbaci[of "q-1" "swap l 0 (q - 1)"] izbaci'_len
+        by (metis (no_types, lifting) Suc_eq_plus1  less_diff_conv nat_less_le nle_le numeral_3_eq_3 one_add_one swap_len zero_less_diff)
     qed
+    
+    from izbacen levo_desno koren izb'_0 assms(2) have "?izb_sw_l!0 \<le> ?izb_sw_l!(q-1)"
+      by presburger
+    then show "izbaci' l q ! 0 \<le> izbaci' l q ! (q - 1)"
+      by auto
   qed
   then have "q - 1 \<ge> length (izbaci' l q) \<or> (izbaci' l q) ! 0 \<le> (izbaci' l q) ! (q-1)" 
     by presburger
@@ -487,7 +744,6 @@ proof (induction l q  rule: izbaciSve.induct)
   qed
 qed
 
-(* TEOREMA KOJU TREBA ISKORISTITI NA KRAJU *)
 theorem izbaciSve_korektnost_hip:
   assumes "JesteHip2 l (length l)"
   shows "JesteSortiran (izbaciSve l (length l)) 0"
@@ -503,34 +759,5 @@ next
     using izbaciSve_korak_sort[of "length l" l]
     by fastforce
 qed
-
-
-lemma izbaci_korak_mset:
-  assumes "i < m"
-      and "m \<le> length l"
-    shows "mset (izbaci l i m) = mset l"
-  using assms
-  by (induction l i m rule: izbaci.induct) (auto simp add: swap_mset swap_len)
-
-lemma izbaci'_mset:
-  assumes "i \<le> length l"
-      and "i > 1"
-    shows "mset (izbaci' l i) = mset l"
-  using assms swap_mset izbaci_korak_mset[of 0 "i-1" "(swap l 0 (i-1))"] swap_len[of l 0 "i-1"]
-  by (metis (mono_tags, lifting) diff_less izbaci'.simps le_eq_less_or_eq order_le_less_trans zero_less_diff
-      zero_less_one)
-
-lemma izbaciSve_korak_mset:
-  assumes "i \<le> length l"
-    shows "mset (izbaciSve l i) = mset l"
-  using assms
-  by (induction l i rule: izbaciSve.induct, metis izbaci_len izbaci'_mset izbaciSve.elims swap_len 
-      less_imp_diff_less linorder_not_less izbaci'.simps diff_is_0_eq nat_less_le)
-
-(* TEOREMA KOJU TREBA ISKORISTITI NA KRAJU *)
-theorem izbaciSve_korektnost_mset:
-  shows "mset (izbaciSve l (length l)) = mset l"
-  using izbaciSve_korak_mset
-  by (metis nat_less_le linorder_not_less)
 
 end

@@ -7,36 +7,6 @@ fun HipSort :: "int list \<Rightarrow> int list" where
 
 value "HipSort [1, 56, 7, 13, 9, 123, 76, 13, 7]"
 
-lemma JesteHipEkvDef: "JesteHip1 l m = JesteHip2 l m"
-proof
-  assume "JesteHip1 l m"
-  then have *: "\<forall>i. (0 < i \<and> i < m) \<longrightarrow> l!(roditelj i) \<ge> l!i"
-    by auto
-  have "\<forall>i. i < m \<longrightarrow> i = najveci3 l i m"
-  proof 
-    fix i::nat
-    show "i < m \<longrightarrow> i = najveci3 l i m "
-      using *
-      by auto
-  qed
-  then show "JesteHip2 l m"
-    by auto
-next
-  assume "JesteHip2 l m"
-  then have *: "\<forall>i. i < m \<longrightarrow> i = najveci3 l i m"
-    by auto
-  have "\<forall>i. (0 < i \<and> i < m) \<longrightarrow> l!(roditelj i) \<ge> l!i"
-  proof
-    fix i::nat
-    show "0 < i \<and> i < m \<longrightarrow> l ! i \<le> l ! roditelj i"
-      using roditelj_je_najveci3 *
-      by auto
-  qed
-  then show "JesteHip1 l m"
-    by auto
-qed
-
-
 theorem 
   shows "JesteSortiran (HipSort l) 0"
     and "mset (HipSort l) = mset l"
