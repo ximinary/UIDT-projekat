@@ -1,7 +1,7 @@
 # Projekat uz "Uvoda u interaktivno dokazivanje teorema"
 ## Algoritam HipSort - Williams
-```
-static ubaci(int a[], int i)
+```cpp
+void ubaci(int a[], int i)
 {
 	while (i > 0) {
 		int roditelj = (i - 1) / 2;
@@ -45,7 +45,7 @@ void izbaciSve(int a[], int n)
 }
 
 
-void heap_sort(int a[], int n)
+void heapSort(int a[], int n)
 {
 	ubaciSve(a, n);
 	izbaciSve(a, n);
