@@ -45,7 +45,7 @@ void izbaciSve(int a[], int n)
 }
 
 
-void heapSort(int a[], int n)
+void HipSort(int a[], int n)
 {
 	ubaciSve(a, n);
 	izbaciSve(a, n);
