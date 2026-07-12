@@ -40,7 +40,7 @@ void izbaciSve(int a[], int n)
 {
 	for (int i = n; i > 1; i--) {
 		swap(&a[0], &a[i-1]);
-		pomeri_nanize(a, 0, i-1);
+		izbaci(a, 0, i-1);
 	}
 }
 
